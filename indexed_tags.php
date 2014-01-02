@@ -13,12 +13,14 @@
 JLoader::register('K2Plugin', JPATH_ADMINISTRATOR . '/components/com_k2/lib/k2plugin.php');
 
 // Instantiate class for K2 plugin events
-class plgK2Indexed_tags extends K2Plugin {
+class plgK2Indexed_tags extends K2Plugin
+{
 
 	var $pluginName = 'indexed_tags';
 	var $pluginNameHumanReadable = 'K2 - Indexed Tags';
 
-	function plgK2Indexed_tags(& $subject, $results) {
+	function plgK2Indexed_tags(& $subject, $results)
+	{
 		parent::__construct($subject, $results);
 	}
 
@@ -28,17 +30,20 @@ class plgK2Indexed_tags extends K2Plugin {
 	 * @param $row
 	 * @param $isNew
 	 */
-	function onAfterK2Save(&$row, $isNew) {
+	function onAfterK2Save(&$row, $isNew)
+	{
 
 		$app = JFactory::getApplication();
 		$db  = JFactory::getDbo();
 
-		if ($app->isAdmin()) {
+		if ($app->isAdmin())
+		{
 
 			$tags     = $this->fetchTags($row->id);
 			$tagNames = null;
 
-			foreach ($tags as $tag) {
+			foreach ($tags as $tag)
+			{
 				$tagNames .= $tag->name . ' ';
 			}
 
@@ -49,6 +54,8 @@ class plgK2Indexed_tags extends K2Plugin {
 				WHERE id = ' . $db->Quote($row->id) . '';
 			$db->setQuery($query);
 			$db->query();
+
+			$this->setTags($row->id, $tagNames);
 		}
 	}
 
@@ -59,7 +66,8 @@ class plgK2Indexed_tags extends K2Plugin {
 	 *
 	 * @return mixed
 	 */
-	private function fetchTags($id) {
+	private function fetchTags($id)
+	{
 
 		$db    = JFactory::getDbo();
 		$query = 'SELECT tag.name, tag.id
@@ -73,5 +81,29 @@ class plgK2Indexed_tags extends K2Plugin {
 		$tags = $db->loadObjectList();
 
 		return $tags;
+	}
+
+	private function setTags($id, $tagNames)
+	{
+		$db    = JFactory::getDbo();
+		$query = 'SELECT ' . $db->nameQuote('plugins') .
+			' FROM ' . $db->nameQuote('#__k2_items') .
+			' WHERE id = ' . $db->Quote($id) . '';
+
+		$db->setQuery($query);
+		$plugins = $db->loadResult();
+
+		$plugins = parse_ini_string($plugins, false, INI_SCANNER_RAW);
+
+		if (!($plugins['tags']))
+		{
+			$query = 'UPDATE ' . $db->nameQuote('#__k2_items') . '
+			SET ' . $db->nameQuote('plugins') . ' = CONCAT(
+				' . $db->nameQuote('plugins') . ',' . $db->Quote('tags=' . $tagNames . "\n") . '
+			)
+			WHERE id = ' . $db->Quote($id) . '';
+			$db->setQuery($query);
+			$db->query();
+		}
 	}
 }
