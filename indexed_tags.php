@@ -42,25 +42,27 @@ class plgK2Indexed_tags extends K2Plugin
 	{
 
 		$app = JFactory::getApplication();
-		$db  = JFactory::getDbo();
 
 		if ($app->isAdmin())
 		{
-
-			$tags     = $this->getTags($row->id);
-			$tagNames = implode(' ', $tags);
-
+			$tags = $this->getTags($row->id);
+			$this->setExtraFieldsSearchData($row->id, $tags);
 			$this->setpluginsData($row->id, $tags, 'tags');
-
-			$query = 'UPDATE ' . $db->nameQuote('#__k2_items') . '
-				SET ' . $db->nameQuote('extra_fields_search') . ' = CONCAT(
-					' . $db->nameQuote('extra_fields_search') . ',' . $db->Quote($tagNames) . '
-				)
-				WHERE id = ' . $db->Quote($row->id) . '';
-			$db->setQuery($query);
-			$db->query();
-			$this->checkDbError();
 		}
+	}
+
+	private function setExtraFieldsSearchData($id, $data)
+	{
+		$db    = JFactory::getDbo();
+		$data  = implode(' ', $data);
+		$query = 'UPDATE ' . $db->nameQuote('#__k2_items') . '
+			SET ' . $db->nameQuote('extra_fields_search') . ' = CONCAT(
+				' . $db->nameQuote('extra_fields_search') . ',' . $db->Quote($data) . '
+			)
+			WHERE id = ' . $db->Quote($id) . '';
+		$db->setQuery($query);
+		$db->query();
+		$this->checkDbError();
 	}
 
 	/**
