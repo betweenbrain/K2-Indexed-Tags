@@ -40,10 +40,7 @@ class plgK2Indexed_tags extends K2Plugin
 	 */
 	function onAfterK2Save(&$row, $isNew)
 	{
-
-		$app = JFactory::getApplication();
-
-		if ($app->isAdmin())
+		if ($this->app->isAdmin())
 		{
 			$tags = $this->getTags($row->id);
 			$this->setExtraFieldsSearchData($row->id, $tags);
@@ -53,15 +50,14 @@ class plgK2Indexed_tags extends K2Plugin
 
 	private function setExtraFieldsSearchData($id, $data)
 	{
-		$db    = JFactory::getDbo();
 		$data  = implode(' ', $data);
-		$query = 'UPDATE ' . $db->nameQuote('#__k2_items') . '
-			SET ' . $db->nameQuote('extra_fields_search') . ' = CONCAT(
-				' . $db->nameQuote('extra_fields_search') . ',' . $db->Quote($data) . '
+		$query = 'UPDATE ' . $this->db->nameQuote('#__k2_items') . '
+			SET ' . $this->db->nameQuote('extra_fields_search') . ' = CONCAT(
+				' . $this->db->nameQuote('extra_fields_search') . ',' . $this->db->Quote($data) . '
 			)
-			WHERE id = ' . $db->Quote($id) . '';
-		$db->setQuery($query);
-		$db->query();
+			WHERE id = ' . $this->db->Quote($id) . '';
+		$this->db->setQuery($query);
+		$this->db->query();
 		$this->checkDbError();
 	}
 
@@ -74,17 +70,15 @@ class plgK2Indexed_tags extends K2Plugin
 	 */
 	private function getTags($id)
 	{
-
-		$db    = JFactory::getDbo();
 		$query = 'SELECT tag.name
-			FROM ' . $db->nameQuote('#__k2_tags') . '  as tag
-			LEFT JOIN ' . $db->nameQuote('#__k2_tags_xref') . '
+			FROM ' . $this->db->nameQuote('#__k2_tags') . '  as tag
+			LEFT JOIN ' . $this->db->nameQuote('#__k2_tags_xref') . '
 			AS xref ON xref.tagID = tag.id
-			WHERE xref.itemID = ' . $db->Quote($id) . '
+			WHERE xref.itemID = ' . $this->db->Quote($id) . '
 			AND tag.published = 1';
 
-		$db->setQuery($query);
-		$tags = $db->loadResultArray();
+		$this->db->setQuery($query);
+		$tags = $this->db->loadResultArray();
 		$this->checkDbError();
 
 		return $tags;
