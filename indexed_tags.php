@@ -47,7 +47,7 @@ class plgK2Indexed_tags extends K2Plugin
 		if ($app->isAdmin())
 		{
 
-			$tags     = $this->fetchTags($row->id);
+			$tags     = $this->getTags($row->id);
 			$tagNames = implode(' ', $tags);
 
 			$this->setpluginsData($row->id, $tags, 'tags');
@@ -70,7 +70,7 @@ class plgK2Indexed_tags extends K2Plugin
 	 *
 	 * @return mixed
 	 */
-	private function fetchTags($id)
+	private function getTags($id)
 	{
 
 		$db    = JFactory::getDbo();
