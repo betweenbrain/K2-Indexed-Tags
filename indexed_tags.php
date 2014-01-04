@@ -48,6 +48,12 @@ class plgK2Indexed_tags extends K2Plugin
 		}
 	}
 
+	/**
+	 * Adds data to the extra_fields_search column of a K2 item
+	 *
+	 * @param $id
+	 * @param $data
+	 */
 	private function setExtraFieldsSearchData($id, $data)
 	{
 		$data  = implode(' ', $data);
