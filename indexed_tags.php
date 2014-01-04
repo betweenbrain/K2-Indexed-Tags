@@ -59,12 +59,12 @@ class plgK2Indexed_tags extends K2Plugin
 				WHERE id = ' . $db->Quote($row->id) . '';
 			$db->setQuery($query);
 			$db->query();
-
+			$this->checkDbError();
 		}
 	}
 
 	/**
-	 * function to fetch an item's tags
+	 * function to fetch a K2 item's tags
 	 *
 	 * @param $id
 	 *
@@ -83,10 +83,18 @@ class plgK2Indexed_tags extends K2Plugin
 
 		$db->setQuery($query);
 		$tags = $db->loadResultArray();
+		$this->checkDbError();
 
 		return $tags;
 	}
 
+	/**
+	 * Sets the plugins data for the specified K2 item
+	 *
+	 * @param $id
+	 * @param $data
+	 * @param $type
+	 */
 	private function setpluginsData($id, $data, $type)
 	{
 
@@ -108,6 +116,13 @@ class plgK2Indexed_tags extends K2Plugin
 		$this->checkDbError();
 	}
 
+	/**
+	 * Gets the plugins data for the specified K2 item
+	 *
+	 * @param $id
+	 *
+	 * @return mixed
+	 */
 	private function getpluginsData($id)
 	{
 		$query = 'SELECT ' . $this->db->nameQuote('plugins') .
@@ -121,6 +136,11 @@ class plgK2Indexed_tags extends K2Plugin
 		return $pluginsData;
 	}
 
+	/**
+	 * Checks for any database errors after running a query
+	 *
+	 * @throws Exception
+	 */
 	private function checkDbError()
 	{
 		if ($error = $this->db->getErrorMsg())
