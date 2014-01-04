@@ -9,6 +9,8 @@
  * License    GNU GPL v3 or later
  */
 
+jimport('joomla.error.log');
+
 // Load the K2 Plugin API
 JLoader::register('K2Plugin', JPATH_ADMINISTRATOR . '/components/com_k2/lib/k2plugin.php');
 
@@ -19,9 +21,15 @@ class plgK2Indexed_tags extends K2Plugin
 	var $pluginName = 'indexed_tags';
 	var $pluginNameHumanReadable = 'K2 - Indexed Tags';
 
-	function plgK2Indexed_tags(& $subject, $results)
+	/**
+	 * Constructor
+	 */
+	function __construct(&$subject, $results)
 	{
 		parent::__construct($subject, $results);
+		$this->app = JFactory::getApplication();
+		$this->db  = JFactory::getDbo();
+		$this->log = JLog::getInstance();
 	}
 
 	/**
@@ -40,12 +48,9 @@ class plgK2Indexed_tags extends K2Plugin
 		{
 
 			$tags     = $this->fetchTags($row->id);
-			$tagNames = null;
+			$tagNames = implode(' ', $tags);
 
-			foreach ($tags as $tag)
-			{
-				$tagNames .= $tag->name . ' ';
-			}
+			$this->setpluginsData($row->id, $tags, 'tags');
 
 			$query = 'UPDATE ' . $db->nameQuote('#__k2_items') . '
 				SET ' . $db->nameQuote('extra_fields_search') . ' = CONCAT(
@@ -55,7 +60,6 @@ class plgK2Indexed_tags extends K2Plugin
 			$db->setQuery($query);
 			$db->query();
 
-			$this->setTags($row->id, $tagNames);
 		}
 	}
 
@@ -70,7 +74,7 @@ class plgK2Indexed_tags extends K2Plugin
 	{
 
 		$db    = JFactory::getDbo();
-		$query = 'SELECT tag.name, tag.id
+		$query = 'SELECT tag.name
 			FROM ' . $db->nameQuote('#__k2_tags') . '  as tag
 			LEFT JOIN ' . $db->nameQuote('#__k2_tags_xref') . '
 			AS xref ON xref.tagID = tag.id
@@ -78,32 +82,51 @@ class plgK2Indexed_tags extends K2Plugin
 			AND tag.published = 1';
 
 		$db->setQuery($query);
-		$tags = $db->loadObjectList();
+		$tags = $db->loadResultArray();
 
 		return $tags;
 	}
 
-	private function setTags($id, $tagNames)
+	private function setpluginsData($id, $data, $type)
 	{
-		$db    = JFactory::getDbo();
-		$query = 'SELECT ' . $db->nameQuote('plugins') .
-			' FROM ' . $db->nameQuote('#__k2_items') .
-			' WHERE id = ' . $db->Quote($id) . '';
 
-		$db->setQuery($query);
-		$plugins = $db->loadResult();
-
-		$plugins = parse_ini_string($plugins, false, INI_SCANNER_RAW);
-
-		if (!($plugins['tags']))
+		$pluginsData         = $this->getpluginsData($id);
+		$pluginsArray        = parse_ini_string($pluginsData, false, INI_SCANNER_RAW);
+		$pluginsArray[$type] = implode(',', $data);
+		$pluginData          = null;
+		foreach ($pluginsArray as $key => $value)
 		{
-			$query = 'UPDATE ' . $db->nameQuote('#__k2_items') . '
-			SET ' . $db->nameQuote('plugins') . ' = CONCAT(
-				' . $db->nameQuote('plugins') . ',' . $db->Quote('tags=' . $tagNames . "\n") . '
-			)
-			WHERE id = ' . $db->Quote($id) . '';
-			$db->setQuery($query);
-			$db->query();
+			$pluginData .= "$key=" . $value . "\n";
+		}
+
+		$query = 'UPDATE ' . $this->db->nameQuote('#__k2_items') .
+			' SET ' . $this->db->nameQuote('plugins') . '=\'' . $pluginData . '\'' .
+			' WHERE id = ' . $this->db->Quote($id) . '';
+
+		$this->db->setQuery($query);
+		$this->db->query();
+		$this->checkDbError();
+	}
+
+	private function getpluginsData($id)
+	{
+		$query = 'SELECT ' . $this->db->nameQuote('plugins') .
+			' FROM ' . $this->db->nameQuote('#__k2_items') .
+			' WHERE id = ' . $this->db->Quote($id) . '';
+
+		$this->db->setQuery($query);
+		$pluginsData = $this->db->loadResult();
+		$this->checkDbError();
+
+		return $pluginsData;
+	}
+
+	private function checkDbError()
+	{
+		if ($error = $this->db->getErrorMsg())
+		{
+			$this->log->addEntry(array('LEVEL' => '1', 'STATUS' => 'Database Error:', 'COMMENT' => $error));
+			throw new Exception($error);
 		}
 	}
 }
