@@ -104,7 +104,7 @@ class plgK2Indexed_tags extends K2Plugin
 		$pluginsArray = parse_ini_string($pluginsData, false, INI_SCANNER_RAW);
 		if ($data)
 		{
-			$pluginsArray[$type] = implode(',', $data);
+			$pluginsArray[$type] = implode(';', $data);
 		}
 		else
 		{
