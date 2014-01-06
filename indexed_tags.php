@@ -113,7 +113,7 @@ class plgK2Indexed_tags extends K2Plugin
 		$pluginData = null;
 		foreach ($pluginsArray as $key => $value)
 		{
-			$pluginData .= "$key=" . $value . "\n";
+			$pluginData .= "$key=\"$value\"" . "\n";
 		}
 
 		$query = 'UPDATE ' . $this->db->nameQuote('#__k2_items') .
