@@ -148,7 +148,7 @@ class plgK2Indexed_tags extends K2Plugin
 	/**
 	 * Checks for any database errors after running a query
 	 *
-	 * @throws Exception
+	 * @param null $backtrace
 	 */
 	private function checkDbError($backtrace = null)
 	{
