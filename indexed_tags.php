@@ -150,12 +150,18 @@ class plgK2Indexed_tags extends K2Plugin
 	 *
 	 * @throws Exception
 	 */
-	private function checkDbError()
+	private function checkDbError($backtrace = null)
 	{
 		if ($error = $this->db->getErrorMsg())
 		{
+			if ($backtrace)
+			{
+				$e = new Exception();
+				$error .= "\n" . $e->getTraceAsString();
+			}
+
 			$this->log->addEntry(array('LEVEL' => '1', 'STATUS' => 'Database Error:', 'COMMENT' => $error));
-			throw new Exception($error);
+			JError::raiseWarning(100, $error);
 		}
 	}
 }
